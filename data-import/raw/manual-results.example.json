@@ -1,0 +1,21 @@
+[
+  {
+    "athleteName": "Masai Russell",
+    "athleteEnglishName": "Masai Russell",
+    "competitionName": "Xiamen Diamond League 2026",
+    "competitionSlug": "xiamen-2026",
+    "date": "2026-05-23",
+    "event": "Women's 100m Hurdles",
+    "place": 1,
+    "mark": "12.14",
+    "wind": "+0.5",
+    "recordTags": ["Diamond League Record"],
+    "source": {
+      "sourceName": "Diamond League",
+      "sourceUrl": "https://www.diamondleague.com/",
+      "sourceType": "diamond-league",
+      "updatedAt": "2026-05-26",
+      "verified": "pending"
+    }
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "syncedAt": "2026-05-26T14:48:35.227Z",
+  "generated": false,
+  "existingResults": 107,
+  "newCompetitions": 0,
+  "parsedResults": 0,
+  "newResults": 0,
+  "pendingResults": 0,
+  "sources": [
+    {
+      "id": "diamond-league-calendar-2026",
+      "name": "Diamond League Calendar 2026",
+      "url": "https://www.diamondleague.com/calendar/",
+      "ok": false,
+      "parsedResults": 0,
+      "notes": [
+        "未发现稳定的结果表格结构，未生成猜测数据。"
+      ],
+      "status": 200
+    },
+    {
+      "id": "world-athletics-diamond-league-results-2026",
+      "name": "World Athletics Diamond League Results 2026",
+      "url": "https://worldathletics.org/competition/calendar-results?competitionGroupId=627&hideCompetitionsWithNoResults=true",
+      "ok": false,
+      "parsedResults": 0,
+      "notes": [
+        "未发现稳定的结果表格结构，未生成猜测数据。"
+      ],
+      "status": 200
+    }
+  ]
+}

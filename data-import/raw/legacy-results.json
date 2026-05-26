@@ -1,0 +1,26 @@
+[
+  {
+    "id": "example-athlete-20250101-100m",
+    "athleteId": "example-athlete",
+    "athleteName": "示例运动员",
+    "competitionName": "示例比赛",
+    "competitionGroup": "Diamond League",
+    "venue": "示例场馆",
+    "city": "示例城市",
+    "country": "示例国家",
+    "date": "2025-01-01",
+    "event": "100m",
+    "round": "Final",
+    "place": 1,
+    "mark": "9.80s",
+    "wind": "+1.0",
+    "recordTags": ["PB", "WL"],
+    "source": {
+      "sourceName": "Diamond League Official Results",
+      "sourceUrl": "https://www.diamondleague.com/programme-results/",
+      "updatedAt": "2025-01-02",
+      "verified": "verified",
+      "notes": "示例核验数据，实际操作时请从官方来源确认"
+    }
+  }
+]

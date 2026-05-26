@@ -1,0 +1,80 @@
+name: Update Diamond League Results
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-results:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sync public results
+        run: npm run data:sync
+
+      - name: Validate data
+        run: npm run data:validate
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare pull request body
+        id: pr_body
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const fs = require('fs');
+          const reportPath = 'data-import/audit/sync-report.json';
+          const report = fs.existsSync(reportPath)
+            ? JSON.parse(fs.readFileSync(reportPath, 'utf8'))
+            : null;
+          const sources = report?.sources?.map((source) => `- ${source.name}: ${source.url}`).join('\n') || '- No audit report found';
+          const body = [
+            `## Diamond League data sync`,
+            ``,
+            `- Sync time: ${report?.syncedAt || new Date().toISOString()}`,
+            `- New competitions: ${report?.newCompetitions ?? 0}`,
+            `- New results: ${report?.newResults ?? 0}`,
+            `- Pending data: ${(report?.pendingResults ?? 0) > 0 ? 'yes' : 'no'}`,
+            `- Audit report: data-import/audit/sync-report.md`,
+            ``,
+            `## Data sources`,
+            sources,
+            ``,
+            `Generated data is pending by default. Please verify source links before marking records as verified.`,
+          ].join('\n');
+          console.log('body<<EOF');
+          console.log(body);
+          console.log('EOF');
+          NODE
+
+      - name: Check for generated data changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain src/data/generated data-import)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/update-diamond-league-results
+          title: 'chore(data): update Diamond League results'
+          body: ${{ steps.pr_body.outputs.body }}
+          labels: data, automated
+          add-paths: |
+            src/data/generated
+            data-import
