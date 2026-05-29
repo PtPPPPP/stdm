@@ -2,5 +2,16 @@
 dist/
 .env
 .env.local
-.vercel/
+.vscode/
+.idea/
+*.swp
+*.swo
 .DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+*.tsbuildinfo
+.cache/
+.parcel-cache/
+coverage/
+.vercel/
