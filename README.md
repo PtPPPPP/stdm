@@ -4,15 +4,32 @@ Diamond Track Atlas 是一个面向田径爱好者的钻石联赛运动员科普
 
 本站不是官方数据源。所有成绩仅用于科普和学习参考，最终请以 Diamond League、World Athletics 等官方发布为准。`verified` 只代表本站人工核验过来源链接，不代表本站具有官方权威。
 
+## License
+
+本仓库的**源代码**以 [MIT License](./LICENSE) 开源。
+
+运动员照片的版权归原作者所有（见下方[运动员图片维护规范](#运动员图片维护规范)）；比赛数据来源于 Diamond League、World Athletics 等公开渠道，仅供科普参考。
+
 ## 技术栈
+
+前端：
 
 - React 18 + TypeScript
 - Vite
 - React Router
 - Tailwind CSS
-- Recharts
+- 自研 SVG 雷达图（不依赖第三方图表库）
+
+后端（[`server/`](./server)）：
+
+- Express + Helmet + CORS + express-rate-limit
+- Zod（请求参数与环境变量校验）
+
+数据脚本：
+
 - Node scripts + tsx
 - cheerio 用于 Node 侧公开网页解析
+- sharp 用于图片压缩 / 转 WebP
 
 ## 项目结构
 
@@ -36,10 +53,16 @@ src/
   lib/
 
 scripts/data/           数据同步、导入、校验和生成脚本
+scripts/images/         图片下载、压缩、转 WebP 脚本
 data-import/
   raw/                  手动导入源文件
   normalized/           标准化中间数据
   audit/                同步和导入审计报告
+server/                 可选的 Express 后端 API
+  src/routes/           athletes / events / results / health
+  src/middleware/       日志、限流、错误处理
+  src/schemas/          Zod 校验
+  src/services/         数据读取
 .github/workflows/     定时数据更新 PR
 ```
 
@@ -56,6 +79,44 @@ npm run build
 ```bash
 npm run data:validate
 npm run check
+```
+
+## 后端 API（server/）
+
+`server/` 是一个可选的 Express 后端，把项目数据以 REST 接口暴露出来供前端或第三方读取。所有路由统一挂在 `/api` 下，响应格式为 `{ success, data }` 或分页 `{ success, data, pagination }`。
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/health` | 健康检查 |
+| GET | `/api/athletes` | 运动员列表（`q` / `country` / `gender` / `event` 及分页 `page` / `limit`） |
+| GET | `/api/athletes/countries` | 国家列表 |
+| GET | `/api/athletes/:id` | 运动员详情（含最近 5 条成绩） |
+| GET | `/api/athletes/:id/results` | 该运动员全部比赛记录 |
+| GET | `/api/events` | 项目列表（支持 `?category=`） |
+| GET | `/api/events/:id` | 项目详情 |
+| GET | `/api/events/:id/results` | 项目比赛记录（分页） |
+| GET | `/api/results` | 成绩查询（`athleteId` / `event` / `competition` / `year` / `verified` / `sort` / `order` / 分页） |
+| GET | `/api/results/events` | 所有比赛项目 |
+| GET | `/api/results/competitions` | 所有赛事名称 |
+
+### 启动后端
+
+```bash
+cd server
+npm install
+npm run dev      # tsx watch，默认 http://localhost:3001
+```
+
+环境变量见 [`server/.env.example`](./server/.env.example)：
+
+- `PORT`（默认 `3001`）
+- `CORS_ORIGIN`（默认 `http://localhost:5173`，即前端 dev 地址）
+- `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW_MS`（默认 100 次 / 分钟）
+
+测试：
+
+```bash
+cd server && npm test
 ```
 
 ## 数据流说明
