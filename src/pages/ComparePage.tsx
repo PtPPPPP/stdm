@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { athletes, getAthleteById } from '../data';
 import { useFavorites } from '../hooks/useFavorites';
 import ComparePanel from '../components/compare/ComparePanel';
@@ -105,9 +106,9 @@ export default function ComparePage() {
             </h3>
             <p className="text-sm text-slate-500">
               使用上方下拉菜单选择运动员，或先从
-              <a href="/athletes" className="text-brand-400 hover:text-brand-300 mx-1">
+              <Link to="/athletes" className="text-brand-400 hover:text-brand-300 mx-1">
                 运动员图鉴
-              </a>
+              </Link>
               中收藏感兴趣的选手，便于快速选择
             </p>
           </div>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正在打开页面…</title>
+  </head>
+  <body>
+    <script id="github-pages-route-fallback">
+      (() => {
+        const basePath = '/stdm/';
+        const { pathname, search, hash } = window.location;
+
+        if (!pathname.startsWith(basePath)) return;
+
+        const relativePath = pathname.slice(basePath.length);
+        const isAssetPath =
+          relativePath.startsWith('assets/') ||
+          relativePath.startsWith('images/') ||
+          /(^|\/)[^/]+\.[^/]+$/.test(relativePath);
+
+        if (isAssetPath) return;
+
+        sessionStorage.setItem('stdm:redirect-path', `${pathname}${search}${hash}`);
+        window.location.replace(basePath);
+      })();
+    </script>
+  </body>
+</html>

@@ -21,6 +21,15 @@
     <meta name="twitter:title" content="钻石田径图鉴 — Diamond Track Atlas" />
     <meta name="twitter:description" content="探索世界顶级田径赛事数据、运动员档案与赛道纪录的交互式图鉴。" />
     <meta name="twitter:image" content="https://example.com/og-image.png" />
+    <script id="github-pages-route-restore">
+      (() => {
+        const redirectPath = sessionStorage.getItem('stdm:redirect-path');
+        if (!redirectPath) return;
+
+        sessionStorage.removeItem('stdm:redirect-path');
+        window.history.replaceState(null, '', redirectPath);
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

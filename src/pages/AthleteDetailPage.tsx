@@ -19,29 +19,39 @@ import AthleteResultTable from '../components/athletes/AthleteResultTable';
 import AthleteStatsPanel from '../components/athletes/AthleteStatsPanel';
 import AthleteImage from '../components/athletes/AthleteImage';
 
+type Athlete = NonNullable<ReturnType<typeof getAthleteById>>;
 
 export default function AthleteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const athlete = id ? getAthleteById(id) : undefined;
-  const { isFavorite, toggleFavorite } = useFavorites();
 
   if (!athlete) {
-    return (
-      <div className="pt-20 pb-16">
-        <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-          <div className="text-5xl mb-4">🏃</div>
-          <h1 className="text-2xl font-bold text-white mb-2">运动员未找到</h1>
-          <p className="text-slate-400 mb-6">该运动员资料可能已被移除或链接有误</p>
-          <Link
-            to="/athletes"
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-500/20 px-4 py-2 text-sm font-medium text-brand-300 hover:bg-brand-500/30 transition-colors"
-          >
-            ← 返回运动员图鉴
-          </Link>
-        </div>
-      </div>
-    );
+    return <AthleteNotFound />;
   }
+
+  return <AthleteDetailContent athlete={athlete} />;
+}
+
+function AthleteNotFound() {
+  return (
+    <div className="pt-20 pb-16">
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+        <div className="text-5xl mb-4">🏃</div>
+        <h1 className="text-2xl font-bold text-white mb-2">运动员未找到</h1>
+        <p className="text-slate-400 mb-6">该运动员资料可能已被移除或链接有误</p>
+        <Link
+          to="/athletes"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-500/20 px-4 py-2 text-sm font-medium text-brand-300 hover:bg-brand-500/30 transition-colors"
+        >
+          ← 返回运动员图鉴
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function AthleteDetailContent({ athlete }: { athlete: Athlete }) {
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   // 缓存运动员详情页的计算结果
   const mainEventData = useMemo(() => getEventById(athlete.mainEvent), [athlete.mainEvent]);
@@ -50,17 +60,17 @@ export default function AthleteDetailPage() {
   const fav = isFavorite(athlete.id);
   const recentCompetitionResults = useMemo(
     () => getResultsForAthlete(competitionResults, athlete).slice(0, 5),
-    [athlete.id]
+    [athlete]
   );
   const featuredResults = useMemo(() => [
     ...getTaggedResultsByAthleteId(competitionResults, athlete, 'PB'),
     ...getTaggedResultsByAthleteId(competitionResults, athlete, 'SB'),
   ].filter(
     (result, index, all) => all.findIndex((item) => item.id === result.id) === index
-  ), [athlete.id]);
+  ), [athlete]);
   const seasonBestResults = useMemo(
     () => getTaggedResultsByAthleteId(competitionResults, athlete, 'SB').slice(0, 3),
-    [athlete.id]
+    [athlete]
   );
 
   const eventCategoryLabel = EVENT_CATEGORY_LABELS[category];
