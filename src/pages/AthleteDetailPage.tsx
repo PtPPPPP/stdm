@@ -8,6 +8,7 @@ import {
   getSimilarAthletes,
   getResultsForAthlete,
   getTaggedResultsByAthleteId,
+  getRecordedBests,
   EVENT_CATEGORY_LABELS,
 } from '../data';
 import { useFavorites } from '../hooks/useFavorites';
@@ -29,7 +30,7 @@ export default function AthleteDetailPage() {
     return <AthleteNotFound />;
   }
 
-  return <AthleteDetailContent athlete={athlete} />;
+  return <AthleteDetailContent key={athlete.id} athlete={athlete} />;
 }
 
 function AthleteNotFound() {
@@ -69,7 +70,7 @@ function AthleteDetailContent({ athlete }: { athlete: Athlete }) {
     (result, index, all) => all.findIndex((item) => item.id === result.id) === index
   ), [athlete]);
   const seasonBestResults = useMemo(
-    () => getTaggedResultsByAthleteId(competitionResults, athlete, 'SB').slice(0, 3),
+    () => getRecordedBests(competitionResults, athlete, 'SB').slice(0, 3),
     [athlete]
   );
 
@@ -87,11 +88,11 @@ function AthleteDetailContent({ athlete }: { athlete: Athlete }) {
             <span>/</span>
             <span className="text-slate-300">{athlete.name}</span>
           </nav>
-          <div className="flex items-center gap-3 text-xs text-slate-500">
-            <span>数据更新至：{dataMeta.lastManualUpdate}</span>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <span>资料核对：{dataMeta.lastManualUpdate}</span>
             <span>·</span>
             <span>
-              最新完成站：
+              最近收录站：
               {(dataMeta.latestCompletedMeet ?? '暂无').replace(' Diamond League 2026', ' 2026')}
             </span>
             <DataFreshnessBadge />
@@ -127,11 +128,30 @@ function AthleteDetailContent({ athlete }: { athlete: Athlete }) {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left column: Story, honors, techniques */}
           <div className="lg:col-span-2 space-y-8">
+            {/* PB & Results */}
+            <section className="glass-card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">代表成绩</h2>
+                <DataFreshnessBadge />
+              </div>
+              <AthleteResultTable
+                results={featuredResults}
+                emptyTitle="暂无个人最佳 / 赛季最佳记录"
+                emptyDescription="个人最佳（PB）和赛季最佳（SB）仅展示已收录且带对应标记的比赛记录。"
+              />
+            </section>
+
+            {/* Recent competition results */}
+            <section className="glass-card p-6">
+              <h2 className="text-lg font-bold text-white mb-4">最近收录比赛记录</h2>
+              <AthleteResultTable results={recentCompetitionResults} />
+            </section>
+
             {/* Style profile */}
             <section className="glass-card p-6">
               <h2 className="text-lg font-bold text-white mb-4">技术风格画像</h2>
               <div className="flex flex-col sm:flex-row items-center gap-6">
-                <RadarChart profile={athlete.styleProfile} size={220} />
+                <div><RadarChart profile={athlete.styleProfile} size={220} /><p className="mt-2 text-center text-xs text-slate-400">风格评分为编辑解读，非官方统计</p></div>
                 <div className="flex-1 space-y-2">
                   <h3 className="text-sm font-semibold text-slate-400 mb-2">
                     优势特点
@@ -167,25 +187,6 @@ function AthleteDetailContent({ athlete }: { athlete: Athlete }) {
                   )}
                 </div>
               </div>
-            </section>
-
-            {/* PB & Results */}
-            <section className="glass-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">代表成绩</h2>
-                <DataFreshnessBadge />
-              </div>
-              <AthleteResultTable
-                results={featuredResults}
-                emptyTitle="暂无 PB / SB 数据"
-                emptyDescription="PB / SB 只展示有来源和核验状态的比赛记录。"
-              />
-            </section>
-
-            {/* Recent competition results */}
-            <section className="glass-card p-6">
-              <h2 className="text-lg font-bold text-white mb-4">最近比赛记录</h2>
-              <AthleteResultTable results={recentCompetitionResults} />
             </section>
 
             {/* Major honors */}
@@ -246,11 +247,11 @@ function AthleteDetailContent({ athlete }: { athlete: Athlete }) {
           <div className="space-y-8">
             <section className="glass-card p-5">
               <h3 className="text-sm font-bold text-white mb-3 uppercase tracking-wide">
-                赛季最佳
+                {new Date().getFullYear()} 赛季最佳
               </h3>
               <AthleteResultTable
                 results={seasonBestResults}
-                emptyTitle="暂无 SB 数据"
+                emptyTitle="暂无赛季最佳记录"
                 emptyDescription="赛季最佳只展示比赛记录中标注 SB 的成绩。"
                 emptyClassName="py-6"
               />

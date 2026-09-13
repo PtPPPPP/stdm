@@ -1,15 +1,9 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  competitionResults,
-  getEventById,
-  getAthleteDisplayLatestResult,
-  getTaggedResultsByAthleteId,
-  EVENT_CATEGORY_TAG_CLASS,
-} from '../../data';
-import type { Athlete, EventCategory } from '../../data';
-import { SourceLink } from '../data/SourceLink';
-import { VerificationBadge } from '../data/VerificationBadge';
+import { competitionResults, getEventById, getAthleteDisplayLatestResult, getRecordedBests, EVENT_CATEGORY_TAG_CLASS } from '../../data';
+import type { Athlete } from '../../data';
+import { SourceLink } from '../ui/SourceLink';
+import { VerificationBadge } from '../ui/VerificationBadge';
 import AthleteImage from './AthleteImage';
 
 interface AthleteCardProps {
@@ -18,161 +12,78 @@ interface AthleteCardProps {
   onToggleFavorite: (id: string) => void;
 }
 
-function getCategoryFromAthlete(athlete: Athlete): EventCategory {
-  const event = getEventById(athlete.mainEvent);
-  if (event) return event.category;
-  return 'sprints';
-}
-
-const GENDER_LABEL = { male: '♂', female: '♀' } as const;
-
 function AthleteCard({ athlete, isFavorite, onToggleFavorite }: AthleteCardProps) {
-  const category = getCategoryFromAthlete(athlete);
-  const topPB = useMemo(
-    () => getTaggedResultsByAthleteId(competitionResults, athlete, 'PB')[0],
-    [athlete.id]
-  );
-  const displayResult = useMemo(
-    () => getAthleteDisplayLatestResult(athlete, competitionResults),
-    [athlete.id]
-  );
+  const category = getEventById(athlete.mainEvent)?.category ?? 'sprints';
+  const topPB = getRecordedBests(competitionResults, athlete, 'PB')[0];
+  const latest = getAthleteDisplayLatestResult(athlete, competitionResults);
+  const summaries = [
+    { label: '已收录个人最佳 · PB', result: topPB },
+    { label: '最近收录比赛', result: latest },
+  ];
 
   return (
-    <div className="glass-card-hover group relative overflow-hidden">
-      {/* ── 顶部照片区域 ── */}
-      <div className="relative">
-        <AthleteImage athlete={athlete} variant="card" />
-
-        {/* 图片上的叠加信息 */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-          <div className="flex items-end justify-between">
-            <div className="min-w-0">
-              <h3 className="font-bold text-white text-lg leading-tight drop-shadow-lg truncate">
-                {athlete.name}
-              </h3>
-              <p className="text-xs text-white/70 mt-0.5 drop-shadow">
-                {athlete.country} · {GENDER_LABEL[athlete.gender]} · {athlete.englishName}
-              </p>
-            </div>
-
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onToggleFavorite(athlete.id);
-              }}
-              className="flex-shrink-0 rounded-lg p-1.5 transition-colors hover:bg-white/20 backdrop-blur-sm"
-              aria-label={isFavorite ? '取消收藏' : '加入收藏'}
-            >
-              <svg
-                className={`h-5 w-5 transition-colors ${
-                  isFavorite ? 'text-track-gold fill-track-gold drop-shadow' : 'text-white/60'
-                }`}
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                fill={isFavorite ? 'currentColor' : 'none'}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                />
-              </svg>
-            </button>
-          </div>
+    <article className="glass-card-hover flex min-w-0 flex-col p-5">
+      <div className="flex items-start gap-3">
+        <Link to={`/athletes/${athlete.id}`} className="shrink-0" aria-label={`查看${athlete.name}的资料`}>
+          <AthleteImage athlete={athlete} variant="compare" className="h-20 w-16" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-lg font-bold leading-snug text-white">
+            <Link to={`/athletes/${athlete.id}`} className="hover:text-brand-300">{athlete.name}</Link>
+          </h3>
+          <p className="mt-1 break-words text-xs text-slate-400">{athlete.englishName}</p>
+          <p className="mt-2 text-sm text-slate-300">{athlete.country} · {athlete.gender === 'male' ? '男子' : '女子'}</p>
         </div>
+        <button type="button" onClick={() => onToggleFavorite(athlete.id)} aria-label={isFavorite ? '取消收藏' : '加入收藏'} aria-pressed={isFavorite}
+          className={`shrink-0 rounded-lg p-2 text-xl transition-colors hover:bg-white/10 ${isFavorite ? 'text-track-gold' : 'text-slate-400'}`}>
+          <span aria-hidden="true">{isFavorite ? '★' : '☆'}</span>
+        </button>
       </div>
-
-      {/* ── 信息区域 ── */}
-      <div className="p-5">
-        {/* 标签 */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          <span className={EVENT_CATEGORY_TAG_CLASS[category]}>
-            {athlete.mainEvent}
-          </span>
-          {athlete.tags.slice(0, 2).map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-slate-400"
-            >
-              {tag}
-            </span>
+      <div className="my-4 flex flex-wrap gap-2">
+        <span className={EVENT_CATEGORY_TAG_CLASS[category]}>主项 · {athlete.mainEvent}</span>
+        {athlete.tags.slice(0, 2).map((tag) => (
+          <span key={tag} className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-slate-300">{tag}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {summaries.map(({ label, result }, index) => (
+          <div key={label} className={`min-w-0 rounded-xl border p-3 ${index === 0 ? 'border-brand-500/20 bg-brand-500/10' : 'border-white/10 bg-white/5'}`}>
+            <p className={`text-xs ${index === 0 ? 'text-brand-300' : 'text-slate-300'}`}>{label}</p>
+            <p className="my-2 break-words text-2xl font-bold tabular-nums text-white">{result?.mark ?? '暂无记录'}</p>
+            {result && <>
+              <p className="text-xs text-slate-300">{result.event}{index === 1 && result.place != null ? ` · 第 ${result.place} 名` : ''}</p>
+              <p className="mt-2 text-xs text-slate-400">{result.date}</p>
+              <div className="mt-2"><VerificationBadge verified={result.source.verified} /></div>
+            </>}
+          </div>
+        ))}
+      </div>
+      {latest && <p className="mt-2 text-xs leading-relaxed text-slate-400">最近参赛：{latest.competitionName}</p>}
+      <div className="my-4">
+        <p className="mb-2 text-xs text-slate-400">技术特点</p>
+        <div className="flex flex-wrap gap-1.5">
+          {athlete.strengths.slice(0, 3).map((strength) => (
+            <span key={strength} className="rounded-md bg-brand-500/10 px-2 py-1 text-xs text-brand-300">{strength}</span>
           ))}
         </div>
-
-        {/* PB */}
-        {topPB && (
-          <div className="mb-3 rounded-lg bg-white/5 px-3 py-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs text-slate-500">PB · {topPB.event}</div>
-              <VerificationBadge verified={topPB.source.verified} />
-            </div>
-            <div className="text-lg font-bold text-white">{topPB.mark}</div>
-            <SourceLink
-              sourceName={topPB.source.sourceName}
-              sourceUrl={topPB.source.sourceUrl}
-              updatedAt={topPB.source.updatedAt}
-            />
-          </div>
-        )}
-
-        {/* 技术特点 */}
-        <div className="mb-4">
-          <p className="text-xs text-slate-500 mb-1.5">技术特点</p>
-          <div className="flex flex-wrap gap-1">
-            {athlete.strengths.slice(0, 3).map((s) => (
-              <span
-                key={s}
-                className="rounded-md bg-brand-500/10 px-2 py-0.5 text-xs text-brand-300"
-              >
-                {s}
-              </span>
+      </div>
+      <div className="mt-auto">
+        {(topPB || latest) && (
+          <details className="mb-3 text-xs text-slate-400">
+            <summary className="cursor-pointer py-1 hover:text-white">成绩来源</summary>
+            {summaries.map(({ label, result }) => result && (
+              <div key={label} className="mt-2">
+                <p>{label}</p>
+                <SourceLink sourceName={result.source.sourceName} sourceUrl={result.source.sourceUrl} updatedAt={result.source.updatedAt} />
+              </div>
             ))}
-          </div>
-        </div>
-
-        {/* 最近比赛 */}
-        {displayResult && (
-          <div className="mb-4 rounded-lg bg-white/5 px-3 py-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-500">最近比赛</span>
-              <span className="text-xs text-slate-600">{displayResult.date}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-white">{displayResult.mark}</span>
-              <span className="text-xs text-slate-400">{displayResult.event}</span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-2">
-              <span className="text-xs text-slate-500 truncate">{displayResult.competitionName}</span>
-              <VerificationBadge verified={displayResult.source.verified} />
-            </div>
-            <SourceLink
-              sourceName={displayResult.source.sourceName}
-              sourceUrl={displayResult.source.sourceUrl}
-              updatedAt={displayResult.source.updatedAt}
-              className="mt-1"
-            />
-          </div>
+          </details>
         )}
-
-        {!displayResult && (
-          <div className="mb-4 rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-xs text-slate-500">
-            暂无最近比赛记录
-          </div>
-        )}
-
-        {/* 详情链接 */}
-        <Link
-          to={`/athletes/${athlete.id}`}
-          className="flex items-center justify-center gap-1 rounded-lg bg-white/5 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          查看详情
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
+        <Link to={`/athletes/${athlete.id}`} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10 hover:text-white">
+          查看详细资料 <span aria-hidden="true">→</span>
         </Link>
       </div>
-    </div>
+    </article>
   );
 }
 

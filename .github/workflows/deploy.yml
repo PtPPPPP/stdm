@@ -27,6 +27,12 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm ci --prefix server
+      - run: npx tsx scripts/export-data.ts
+      - run: npm run lint
+      - run: npm test
+      - run: npm run data:validate
+      - run: npm --prefix server run build
 
       # CI 下 GITHUB_ACTIONS=true，Vite base 自动用 /stdm/（见 vite.config.ts）
       - run: npm run build

@@ -1,3 +1,4 @@
+import { parseMarkValue } from './markUtils';
 import type { Athlete, CompetitionResult, DataMeta } from './types';
 
 function normalizeName(value: string): string {
@@ -73,15 +74,7 @@ export function getResultsForAthlete(
   results: CompetitionResult[],
   athlete: Pick<Athlete, 'id' | 'englishName' | 'name'>
 ): CompetitionResult[] {
-  const byId = getLatestResultByAthleteId(results, athlete.id);
-  if (byId) return getResultsByAthleteId(results, athlete.id);
-
-  return sortResultsByDateDesc(
-    results.filter((result) => {
-      const names = [result.athleteName, result.athleteEnglishName].map(normalizeName);
-      return names.includes(normalizeName(athlete.englishName)) || names.includes(normalizeName(athlete.name));
-    })
-  );
+  return getResultsByAthleteId(results, athlete.id);
 }
 
 export function groupResultsByCompetition(
@@ -109,7 +102,7 @@ export function getPendingResults(results: CompetitionResult[]): CompetitionResu
 export type FreshnessStatus = 'fresh' | 'aging' | 'stale';
 
 export function getResultsFreshnessStatus(dataMeta: DataMeta): FreshnessStatus {
-  const lastUpdated = dataMeta.lastAutoSync ?? dataMeta.lastManualUpdate;
+  const lastUpdated = dataMeta.latestCompletedMeetDate ?? dataMeta.lastAutoSync ?? dataMeta.lastManualUpdate;
   const last = new Date(lastUpdated);
   if (Number.isNaN(last.getTime())) return 'stale';
 
@@ -125,4 +118,24 @@ export function getTaggedResultsByAthleteId(
   tag: 'PB' | 'SB'
 ): CompetitionResult[] {
   return getResultsForAthlete(results, athlete).filter((result) => result.recordTags?.includes(tag));
+}
+
+/** PB/SB tags describe a historical race, not a complete current athlete record. */
+export function getRecordedBests(
+  results: CompetitionResult[],
+  athlete: Athlete,
+  tag: 'PB' | 'SB',
+  season = new Date().getFullYear()
+): CompetitionResult[] {
+  const byEvent = new Map<string, CompetitionResult>();
+  for (const result of getTaggedResultsByAthleteId(results, athlete, tag)) {
+    if (result.source.verified !== 'verified' || (tag === 'SB' && Number(result.date.slice(0, 4)) !== season)) continue;
+    const mark = parseMarkValue(result.mark);
+    if (mark === undefined) continue;
+    const previous = byEvent.get(result.event);
+    const previousMark = previous ? parseMarkValue(previous.mark)! : undefined;
+    const higherIsBetter = result.eventCategory === 'jumps' || result.eventCategory === 'throws' || result.eventCategory === 'combined';
+    if (previousMark === undefined || (higherIsBetter ? mark > previousMark : mark < previousMark)) byEvent.set(result.event, result);
+  }
+  return [...byEvent.values()].sort((a, b) => Number(b.event === athlete.mainEvent) - Number(a.event === athlete.mainEvent));
 }

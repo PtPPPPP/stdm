@@ -6,6 +6,7 @@ import { paginationSchema } from './common.schema.js';
  */
 
 export const resultQuerySchema = paginationSchema.extend({
+  sort: z.enum(['date', 'markValue', 'place']).default('date'),
   athleteId: z.string().optional(),
   event: z.string().optional(),
   competition: z.string().optional(),

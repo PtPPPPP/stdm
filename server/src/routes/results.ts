@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { dataService } from '../services/data.js';
-import { validate } from '../middleware/validate.js';
+import { validate, getValidated } from '../middleware/validate.js';
 import { resultQuerySchema } from '../schemas/result.schema.js';
 import { sendSuccess, sendPaginated } from '../utils/response.js';
 
@@ -12,9 +12,9 @@ const router = Router();
  */
 router.get('/', validate(resultQuerySchema, 'query'), (req, res) => {
   const { athleteId, event, competition, year, verified, page, limit, sort, order } =
-    (req as any).validated;
+    getValidated<typeof resultQuerySchema>(res);
 
-  let results = dataService.getResults();
+  let results = [...dataService.getResults()];
 
   // 筛选
   if (athleteId) {
@@ -38,6 +38,8 @@ router.get('/', validate(resultQuerySchema, 'query'), (req, res) => {
   results.sort((a, b) => {
     const aVal = a[sortField];
     const bVal = b[sortField];
+    if (aVal == null) return bVal == null ? 0 : 1;
+    if (bVal == null) return -1;
     if (aVal < bVal) return order === 'asc' ? -1 : 1;
     if (aVal > bVal) return order === 'asc' ? 1 : -1;
     return 0;

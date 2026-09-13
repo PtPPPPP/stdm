@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * 数据加载服务
  *
@@ -12,41 +13,37 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, '../../data');
 
-// 数据缓存（启动时加载一次）
-let _athletes: any[] | null = null;
-let _results: any[] | null = null;
-let _events: any[] | null = null;
-let _dataMeta: any | null = null;
+// Validate the fields used by queries; preserve the remaining profile fields.
+const athleteSchema = z.object({
+  id: z.string(), name: z.string(), englishName: z.string(), country: z.string(),
+  gender: z.enum(['male', 'female']), events: z.array(z.string()),
+}).passthrough();
+const eventSchema = z.object({ id: z.string(), name: z.string(), category: z.string() }).passthrough();
+const resultSchema = z.object({
+  id: z.string(), athleteId: z.string(), event: z.string(), date: z.string(),
+  competitionSlug: z.string(), competitionName: z.string(), mark: z.string(),
+  markValue: z.number().optional(), place: z.number().optional(),
+  source: z.object({ verified: z.enum(['verified', 'pending', 'unverified']) }).passthrough(),
+}).passthrough();
+const metaSchema = z.object({ lastManualUpdate: z.string(), dataPolicy: z.string() }).passthrough();
 
-function loadJSON<T>(filename: string): T {
+function loadJSON<T>(filename: string, schema: z.ZodType<T>): T {
   try {
-    const raw = readFileSync(resolve(DATA_DIR, filename), 'utf-8');
-    return JSON.parse(raw) as T;
-  } catch {
-    console.warn(`⚠️ 数据文件 ${filename} 不存在，请先运行: npx tsx scripts/export-data.ts`);
-    return (Array.isArray([]) ? [] : {}) as T;
+    return schema.parse(JSON.parse(readFileSync(resolve(DATA_DIR, filename), 'utf-8')));
+  } catch (cause) {
+    throw new Error(`无法加载数据文件 ${filename}，请检查数据并运行 npx tsx scripts/export-data.ts`, { cause });
   }
 }
 
-function getAthletes(): any[] {
-  if (!_athletes) _athletes = loadJSON<any[]>('athletes.json');
-  return _athletes;
-}
+let athletes: z.infer<typeof athleteSchema>[] | undefined;
+let results: z.infer<typeof resultSchema>[] | undefined;
+let events: z.infer<typeof eventSchema>[] | undefined;
+let meta: z.infer<typeof metaSchema> | undefined;
 
-function getResults(): any[] {
-  if (!_results) _results = loadJSON<any[]>('results.json');
-  return _results;
-}
-
-function getEvents(): any[] {
-  if (!_events) _events = loadJSON<any[]>('events.json');
-  return _events;
-}
-
-function getDataMeta(): any {
-  if (!_dataMeta) _dataMeta = loadJSON<any>('meta.json');
-  return _dataMeta;
-}
+function getAthletes() { return athletes ??= loadJSON('athletes.json', z.array(athleteSchema)); }
+function getResults() { return results ??= loadJSON('results.json', z.array(resultSchema)); }
+function getEvents() { return events ??= loadJSON('events.json', z.array(eventSchema)); }
+function getDataMeta() { return meta ??= loadJSON('meta.json', metaSchema); }
 
 // ── 查询函数 ──
 
@@ -74,8 +71,9 @@ function searchAthletes(query: string, filters?: { country?: string; gender?: st
     result = result.filter((a) => a.gender === filters.gender);
   }
 
-  if (filters?.event) {
-    result = result.filter((a) => a.events.includes(filters.event));
+  const event = filters?.event;
+  if (event) {
+    result = result.filter((a) => a.events.includes(event));
   }
 
   return result;

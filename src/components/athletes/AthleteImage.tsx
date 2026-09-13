@@ -60,7 +60,7 @@ function PlaceholderImage({
   if (variant === 'avatar' || variant === 'compare') {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-brand-600/60 to-brand-900/80 ${variant === 'avatar' ? 'rounded-full' : 'rounded-2xl'}`}
+        className={`h-full w-full flex items-center justify-center bg-gradient-to-br from-brand-600/60 to-brand-900/80 ${variant === 'avatar' ? 'rounded-full' : 'rounded-2xl'}`}
       >
         <span className="text-white/80 font-bold" style={{ fontSize: variant === 'avatar' ? '0.875rem' : '1.5rem' }}>
           {initials}
@@ -104,7 +104,7 @@ interface AthleteImageProps {
   showCredit?: boolean;
 }
 
-function AthleteImage({
+function AthleteImageContent({
   athlete,
   variant = 'card',
   className = '',
@@ -172,6 +172,11 @@ function AthleteImage({
       )}
     </div>
   );
+}
+
+function AthleteImage(props: AthleteImageProps) {
+  const source = props.athlete.image?.src || props.athlete.avatar || '';
+  return <AthleteImageContent key={`${props.athlete.id}:${source}`} {...props} />;
 }
 
 export default memo(AthleteImage);

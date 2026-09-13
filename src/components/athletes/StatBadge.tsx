@@ -13,8 +13,8 @@ export default function StatBadge({ label, value, highlight }: StatBadgeProps) {
           : 'bg-white/5 border border-white/10'
       }`}
     >
-      <span className="text-lg font-bold text-white">{value}</span>
-      <span className="text-xs text-slate-400 mt-0.5">{label}</span>
+      <span className="text-2xl tabular-nums font-bold text-white">{value}</span>
+      <span className="text-center text-xs text-slate-400 mt-1">{label}</span>
     </div>
   );
 }

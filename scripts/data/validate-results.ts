@@ -6,9 +6,10 @@
  * 输出问题清单。可用于 pre-commit hook 或 CI。
  */
 
-import { competitionResults, dataMeta } from '../../src/data/index.js';
+import { athletes, competitionResults, dataMeta } from '../../src/data/index.js';
 import {
   validateCompetitionResults,
+  validateAthleteReferences,
   validateDataMeta,
 } from '../../src/domain/athletics/validation.js';
 
@@ -16,6 +17,7 @@ function main() {
   const errors = [
     ...validateCompetitionResults(competitionResults),
     ...validateDataMeta(dataMeta),
+    ...validateAthleteReferences(athletes, competitionResults),
   ];
 
   if (errors.length === 0) {

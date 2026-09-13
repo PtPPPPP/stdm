@@ -1,3 +1,4 @@
+import { getResultEventCategory, getMarkUnit, parseMarkValue } from '../../domain/athletics/markUtils';
 /**
  * 钻石田径图鉴 — 比赛记录数据
  *
@@ -14,7 +15,6 @@
 import type {
   CompetitionResult,
   EventCategory,
-  MarkUnit,
   ResultSource,
   ResultSourceType,
 } from '../../domain/athletics/types';
@@ -36,8 +36,6 @@ type LegacyCompetitionResult = Omit<
 };
 
 const athleteById = new Map(athletes.map((athlete) => [athlete.id, athlete]));
-const FALLBACK_PENDING_SOURCE_URL =
-  'https://worldathletics.org/competition/calendar-results';
 
 const SHANGHAI_SOURCE = {
   sourceName: 'Diamond League / World Athletics - Shanghai/Keqiao 2026',
@@ -54,13 +52,7 @@ const XIAMEN_SOURCE = {
 };
 
 
-const VERIFIED_MANUAL_SOURCE = {
-  sourceName: 'World Athletics 官方数据（人工核验）',
-  sourceUrl: 'https://worldathletics.org',
-  updatedAt: '2026-05-29',
-  verified: 'verified' as const,
-  notes: '已通过 World Athletics 官网核验',
-};
+
 
 function inferSourceType(source: LegacyResultSource): ResultSourceType {
   const haystack = `${source.sourceName} ${source.sourceUrl}`.toLowerCase();
@@ -73,44 +65,19 @@ function inferSourceType(source: LegacyResultSource): ResultSourceType {
   return source.sourceType ?? 'unknown';
 }
 
-function inferEventCategory(event: string): EventCategory {
-  const normalized = event.toLowerCase();
-  if (/(100m|200m|400m|sprint|relay)/.test(normalized) && !normalized.includes('h')) {
-    return 'sprints';
-  }
-  if (/(800m|1500m|mile)/.test(normalized)) return 'middle-distance';
-  if (/(3000m|5000m|10000m|marathon|steeple|sc)/.test(normalized)) {
-    return 'long-distance';
-  }
-  if (/(hurdle|h$|mh|110mh|100mh|400mh)/.test(normalized)) return 'hurdles';
-  if (/(jump|vault)/.test(normalized)) return 'jumps';
-  if (/(shot|discus|javelin|hammer|throw)/.test(normalized)) return 'throws';
-  return 'other';
-}
 
-function inferMarkUnit(mark: string): MarkUnit {
-  if (/m$/i.test(mark)) return 'm';
-  if (/^\d+:\d/.test(mark)) return 'time';
-  if (/s$/i.test(mark) || /^\d{1,2}\.\d+$/.test(mark)) return 's';
-  return 'unknown';
-}
-
-function parseMarkValue(mark: string): number | undefined {
-  const numeric = Number.parseFloat(mark.replace(/[^\d.:-]/g, ''));
-  return Number.isFinite(numeric) ? numeric : undefined;
-}
 
 function normalizeCompetitionResult(result: LegacyCompetitionResult): CompetitionResult {
   const athlete = athleteById.get(result.athleteId);
-  const sourceUrl = result.source.sourceUrl.trim() || FALLBACK_PENDING_SOURCE_URL;
+  const sourceUrl = result.source.sourceUrl.trim();
 
   return {
     ...result,
     athleteEnglishName: result.athleteEnglishName ?? athlete?.englishName ?? result.athleteName,
     competitionSlug: result.competitionSlug ?? slugify(result.competitionName),
-    eventCategory: result.eventCategory ?? inferEventCategory(result.event),
+    eventCategory: result.eventCategory ?? getResultEventCategory(result.event),
     markValue: result.markValue ?? parseMarkValue(result.mark),
-    markUnit: result.markUnit ?? inferMarkUnit(result.mark),
+    markUnit: result.markUnit ?? getMarkUnit(result.mark, result.event),
     source: {
       ...result.source,
       sourceUrl,
@@ -535,7 +502,7 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     city: 'Shaoxing/Keqiao',
     country: 'China',
     date: '2026-05-16',
-    event: '400mH',
+    event: '300mH',
     round: 'Final',
     place: 1,
     mark: '33.01',
@@ -552,7 +519,7 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     city: 'Shaoxing/Keqiao',
     country: 'China',
     date: '2026-05-16',
-    event: '400mH',
+    event: '300mH',
     round: 'Final',
     place: 2,
     mark: '33.05',
@@ -1509,10 +1476,16 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     mark: '9.79s',
     wind: '+1.0',
     recordTags: ['PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/olympic-games/paris-7153115/results/men/100-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
-    id: 'noah-lyles-20230825-100m',
+    id: 'noah-lyles-20230820-100m',
     athleteId: 'noah-lyles',
     athleteName: 'Noah Lyles',
     competitionName: 'Budapest 2023 World Championships',
@@ -1520,12 +1493,18 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     venue: 'National Athletics Centre',
     city: 'Budapest',
     country: 'Hungary',
-    date: '2023-08-25',
+    date: '2023-08-20',
     event: '100m',
     round: 'Final',
     place: 1,
     mark: '9.83s',
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/en/competitions/world-athletics-championships/world-athletics-championships-budapest-2023-7138987/news/report/wch-budapest-23-report-men-100m',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'noah-lyles-20220721-200m',
@@ -1543,7 +1522,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     mark: '19.31s',
     wind: '+0.4',
     recordTags: ['PB', 'NR'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/world-athletics-championships/2022/world-athletics-championships-oregon22-7137279/men/200-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'sha-carri-richardson-20230821-100m',
@@ -1561,7 +1546,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     mark: '10.65s',
     wind: '-0.2',
     recordTags: ['PB', 'WL'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/en/competitions/world-athletics-championships/world-athletics-championships-budapest-2023-7138987/news/report/wch-budapest-23-report-women-100m',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'sha-carri-richardson-20240803-100m',
@@ -1576,9 +1567,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     event: '100m',
     round: 'Final',
     place: 2,
-    mark: '10.71s',
-    recordTags: ['SB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    mark: '10.87s',
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/olympic-games/the-xxxiii-olympic-games-7153115/results/women/100-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'fred-kerley-20220716-100m',
@@ -1594,7 +1590,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '9.86s',
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/world-athletics-championships/2022/world-athletics-championships-oregon-2022-7137279/men/100-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'shelly-ann-fraser-pryce-20220717-100m',
@@ -1610,8 +1612,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '10.67s',
-    recordTags: ['WL'],
-    source: VERIFIED_MANUAL_SOURCE,
+    recordTags: ['CR'],
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/world-athletics-championships/2022/world-athletics-championships-oregon-2022-7137279/women/100-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'letsile-tebogo-20240808-200m',
@@ -1627,8 +1635,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '19.46s',
-    recordTags: ['PB', 'NR', 'WL'],
-    source: VERIFIED_MANUAL_SOURCE,
+    recordTags: ['PB', 'NR', 'AR', 'WL'],
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/news/feature/paris-2024-olympics-report-men-200m',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'sydney-mclaughlin-levrone-20240808-400mh',
@@ -1645,7 +1659,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '50.37s',
     recordTags: ['WR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/women/400-metres-hurdles/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'sydney-mclaughlin-levrone-20220722-400mh',
@@ -1662,7 +1682,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '50.68s',
     recordTags: ['WR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/world-athletics-championships/oregon22-7137279/results/women/400-metres-hurdles/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'femke-bol-20230824-400mh',
@@ -1678,7 +1704,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '51.70s',
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/world-athletics-championships/2023/world-athletics-championships-budapest-2023-7138987/women/400-metres-hurdles/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'rai-benjamin-20240809-400mh',
@@ -1695,7 +1727,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '46.46s',
     recordTags: ['SB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/400-metres-hurdles/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'grant-holloway-20240808-110mh',
@@ -1711,7 +1749,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '12.99s',
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/110-metres-hurdles/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'jakob-ingebrigtsen-20240806-1500m',
@@ -1727,7 +1771,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 4,
     mark: '3:28.24',
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/1500-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'jakob-ingebrigtsen-20240810-5000m',
@@ -1744,7 +1794,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '13:13.66',
     recordTags: ['SB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/olympic-games/the-xxxiii-olympic-games-7153115/news/article/paris-2024-olympics-report-men-5000m',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'faith-kipyegon-20240810-1500m',
@@ -1760,8 +1816,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '3:51.29',
-    recordTags: ['OR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    recordTags: ['OR'],
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/news/report/paris-2024-olympics-report-women-1500m',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'josh-kerr-20230823-1500m',
@@ -1777,7 +1839,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '3:29.38',
-    source: VERIFIED_MANUAL_SOURCE,
+    recordTags: ['SB'],
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/world-athletics-championships/world-athletics-championships-budapest-2024-7138987/results/men/1500-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'sifan-hassan-20240811-marathon',
@@ -1794,7 +1863,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '2:22:55',
     recordTags: ['OR'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/women/marathon/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'soufiane-el-bakkali-20240807-3000msc',
@@ -1810,7 +1885,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '8:06.05',
-    source: VERIFIED_MANUAL_SOURCE,
+    recordTags: ['SB'],
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/3000-metres-steeplechase/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'emmanuel-wanyonyi-20240810-800m',
@@ -1827,7 +1909,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '1:41.19',
     recordTags: ['PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/800-metres/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'mondo-duplantis-20240805-pole-vault',
@@ -1844,7 +1932,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '6.25m',
     recordTags: ['WR', 'PB', 'OR'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/pole-vault/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'mondo-duplantis-20240825-pole-vault',
@@ -1861,41 +1955,59 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '6.26m',
     recordTags: ['WR', 'PB', 'MR'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/records/competition-performance-rankings/ranking/633698',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
-    id: 'mondo-duplantis-20250518-pole-vault',
+    id: 'mondo-duplantis-20250915-pole-vault',
     athleteId: 'mondo-duplantis',
     athleteName: 'Mondo Duplantis',
-    competitionName: 'Diamond League Hangzhou 2025',
-    competitionGroup: 'Diamond League',
-    venue: 'Hangzhou Olympic Sports Centre',
-    city: 'Hangzhou',
-    country: 'China',
-    date: '2025-05-18',
+    competitionName: 'Tokyo 2025 World Championships',
+    competitionGroup: 'World Championships',
+    venue: 'Japan National Stadium',
+    city: 'Tokyo',
+    country: 'Japan',
+    date: '2025-09-15',
     event: 'pole-vault',
     round: 'Final',
     place: 1,
     mark: '6.30m',
     recordTags: ['WR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/world-athletics-championships/world-athletics-championships-tokyo-2025-7190593/results/men/pole-vault/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
-    id: 'mondo-duplantis-20260317-pole-vault',
+    id: 'mondo-duplantis-20260312-pole-vault',
     athleteId: 'mondo-duplantis',
     athleteName: 'Mondo Duplantis',
-    competitionName: 'World Athletics Indoor Championships Nanjing 2026',
-    competitionGroup: 'World Indoor Championships',
-    venue: 'Nanjing Olympic Sports Centre',
-    city: 'Nanjing',
-    country: 'China',
-    date: '2026-03-17',
+    competitionName: 'Mondo Classic Uppsala 2026',
+    competitionGroup: 'World Athletics Indoor Tour',
+    venue: 'IFU Arena',
+    city: 'Uppsala',
+    country: 'Sweden',
+    date: '2026-03-12',
     event: 'pole-vault',
     round: 'Final',
     place: 1,
     mark: '6.31m',
     recordTags: ['WR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/news/report/duplantis-breaks-world-pole-vault-record-in-uppsala',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'yaroslava-mahuchikh-20240804-high-jump',
@@ -1910,9 +2022,14 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     event: 'high-jump',
     round: 'Final',
     place: 1,
-    mark: '2.10m',
-    recordTags: ['WR', 'PB', 'OR'],
-    source: VERIFIED_MANUAL_SOURCE,
+    mark: '2.00m',
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/women/high-jump/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'yulimar-rojas-20210801-triple-jump',
@@ -1930,7 +2047,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     mark: '15.67m',
     wind: '+0.7',
     recordTags: ['WR', 'PB', 'OR'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2021/the-xxxii-olympic-games-athletics-7132391/women/triple-jump/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'neeraj-chopra-20240808-javelin',
@@ -1945,9 +2068,15 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     event: 'javelin',
     round: 'Final',
     place: 2,
-    mark: '89.34m',
+    mark: '89.45m',
     recordTags: ['SB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/men/javelin-throw/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'karsten-warholm-20210803-400mh',
@@ -1964,7 +2093,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     place: 1,
     mark: '45.94s',
     recordTags: ['WR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2021/the-xxxii-olympic-games-7132391/men/400-metres-hurdles/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'tobi-amusan-20220724-100mh',
@@ -1982,7 +2117,13 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     mark: '12.12s',
     wind: '+0.9',
     recordTags: ['WR', 'PB'],
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/competitions/world-athletics-championships/world-athletics-championships-oregon-2022-7137279/results/women/100-metres-hurdles/semi-final/summary',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
   {
     id: 'valarie-allman-20240805-discus',
@@ -1998,28 +2139,16 @@ const rawCompetitionResults: LegacyCompetitionResult[] = [
     round: 'Final',
     place: 1,
     mark: '69.50m',
-    source: VERIFIED_MANUAL_SOURCE,
+    source: {
+      sourceName: 'World Athletics 官方结果 / 报道',
+      sourceUrl: 'https://worldathletics.org/results/olympic-games/2024/the-xxxiii-olympic-games-7153115/women/discus-throw/final/result',
+      sourceType: 'world-athletics',
+      updatedAt: '2026-09-13',
+      verified: 'verified',
+    },
   },
 ];
 
 export const competitionResults: CompetitionResult[] = rawCompetitionResults.map(
   normalizeCompetitionResult
 );
-
-/** 按运动员 ID 获取比赛记录，按日期倒序 */
-export function getResultsByAthleteId(athleteId: string): CompetitionResult[] {
-  return competitionResults
-    .filter((r) => r.athleteId === athleteId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-}
-
-/** 获取某运动员的最新 N 条记录 */
-export function getLatestResults(athleteId: string, limit = 5): CompetitionResult[] {
-  return getResultsByAthleteId(athleteId).slice(0, limit);
-}
-
-/** 获取某运动员的最新比赛日期 */
-export function getLatestResultDate(athleteId: string): string | undefined {
-  const results = getResultsByAthleteId(athleteId);
-  return results.length > 0 ? results[0].date : undefined;
-}

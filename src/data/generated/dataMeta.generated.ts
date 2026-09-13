@@ -2,12 +2,10 @@ import type { DataMeta } from '../../domain/athletics/types';
 import { getResultsFreshnessStatus } from '../../domain/athletics/resultUtils';
 
 export const dataMeta: DataMeta = {
-  "lastManualUpdate": "2026-05-26",
+  "lastManualUpdate": "2026-09-13",
   "lastAutoSync": "2026-05-26",
   "latestCompletedMeet": "Xiamen Diamond League 2026",
   "latestCompletedMeetDate": "2026-05-23",
-  "nextMeet": "Rabat Diamond League 2026",
-  "nextMeetDate": "2026-05-31",
   "dataPolicy": "本站为田径科普项目，比赛成绩以 Diamond League、World Athletics 官方结果页和赛事官方报道为准。",
   "recommendedSources": [
     {

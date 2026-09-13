@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// vitest config — separate from defineConfig to avoid type conflict with tsc -b
 export default defineConfig({
   // GitHub Pages 部署在 /stdm/ 子路径;本地 / Vercel 用根路径。改仓库名需同步修改。
   base: process.env.GITHUB_ACTIONS ? '/stdm/' : '/',
@@ -24,12 +23,5 @@ export default defineConfig({
     // 生产构建移除 debugger 和 console
     target: 'es2020',
     minify: 'esbuild',
-  },
-  // @ts-ignore vitest test config
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
-    css: true,
   },
 })

@@ -60,19 +60,15 @@ export default function Home() {
       <section className="border-t border-white/5 bg-slate-950/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
-            <span>数据更新至：{dataMeta.lastManualUpdate}</span>
+            <span>资料核对：{dataMeta.lastManualUpdate}</span>
             <span>·</span>
             <span>
-              最新完成站：
+              最近收录站：
               {(dataMeta.latestCompletedMeet ?? '暂无').replace(' Diamond League 2026', ' 2026')}
               {dataMeta.latestCompletedMeetDate ? `（${dataMeta.latestCompletedMeetDate}）` : ''}
             </span>
             <span>·</span>
-            <span>
-              下一站：
-              {(dataMeta.nextMeet ?? '暂无').replace(' Diamond League 2026', ' 2026')}
-              {dataMeta.nextMeetDate ? `（${dataMeta.nextMeetDate}）` : ''}
-            </span>
+            <a href="https://www.diamondleague.com/calendar/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-300">查看官方赛历 ↗</a>
             <DataFreshnessBadge />
           </div>
         </div>

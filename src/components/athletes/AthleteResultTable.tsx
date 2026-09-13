@@ -1,8 +1,8 @@
 import type { CompetitionResult } from '../../data';
 import { Badge } from '../ui/Badge';
 import { EmptyState } from '../ui/EmptyState';
-import { SourceLink } from '../data/SourceLink';
-import { VerificationBadge } from '../data/VerificationBadge';
+import { SourceLink } from '../ui/SourceLink';
+import { VerificationBadge } from '../ui/VerificationBadge';
 
 interface AthleteResultTableProps {
   results: CompetitionResult[];

@@ -14,7 +14,7 @@ export function ensureGeneratedDir(): void {
 
 export function writeCompetitionResultsGenerated(results: CompetitionResult[]): void {
   ensureGeneratedDir();
-  const content = `import type { CompetitionResult } from '../../domain/athletics/types';\n\nexport const competitionResults: CompetitionResult[] = ${stableJson(results)};\n\nexport function getResultsByAthleteId(athleteId: string): CompetitionResult[] {\n  return competitionResults\n    .filter((result) => result.athleteId === athleteId)\n    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());\n}\n\nexport function getLatestResults(athleteId: string, limit = 5): CompetitionResult[] {\n  return getResultsByAthleteId(athleteId).slice(0, limit);\n}\n\nexport function getLatestResultDate(athleteId: string): string | undefined {\n  return getResultsByAthleteId(athleteId)[0]?.date;\n}\n`;
+  const content = `import type { CompetitionResult } from '../../domain/athletics/types';\n\nexport const competitionResults: CompetitionResult[] = ${stableJson(results)};\n`;
 
   fs.writeFileSync(
     path.join(GENERATED_DIR, 'competitionResults.generated.ts'),

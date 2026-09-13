@@ -21,16 +21,11 @@ function AthleteProfileHeader({
   const genderLabel = athlete.gender === 'male' ? '男' : '女';
 
   return (
-    <div className="flex-1">
-      {/* Hero 大图 */}
-      <div className="mb-6">
-        <AthleteImage athlete={athlete} variant="hero" showCredit />
-      </div>
-
+    <div className="min-w-0 flex-1">
       {/* 头像 + 基本信息 */}
       <div className="mb-6 flex items-start gap-5">
-        <AthleteImage athlete={athlete} variant="avatar" className="h-20 w-20 flex-shrink-0" />
-        <div>
+        <AthleteImage athlete={athlete} variant="compare" className="h-28 w-20 sm:h-36 sm:w-28 flex-shrink-0" />
+        <div className="min-w-0">
           <h1 className="text-2xl font-extrabold text-white sm:text-3xl">
             {athlete.name}
           </h1>
@@ -77,6 +72,8 @@ function AthleteProfileHeader({
 
       {/* 收藏按钮 */}
       <button
+        type="button"
+        aria-pressed={isFavorite}
         onClick={() => onToggleFavorite(athlete.id)}
         className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
           isFavorite

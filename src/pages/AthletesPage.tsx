@@ -54,7 +54,7 @@ export default function Athletes() {
         <div className="py-8">
           <h1 className="text-3xl font-extrabold text-white">运动员图鉴</h1>
           <p className="mt-2 text-slate-400">
-            浏览钻石联赛各项目运动员资料，了解他们的技术特点和代表成绩
+            浏览运动员主项、已收录个人最佳和比赛记录。本站收录不完整，纪录标签以比赛当日为准。
           </p>
         </div>
 

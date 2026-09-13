@@ -37,10 +37,11 @@ export default function ComparePage() {
         {/* Selection area */}
         <div className="grid gap-4 sm:grid-cols-2 mb-8">
           <div className="glass-card p-5">
-            <label className="text-sm font-semibold text-slate-400 mb-3 block">
+            <label htmlFor="athlete-1" className="text-sm font-semibold text-slate-400 mb-3 block">
               选择运动员 A
             </label>
             <select
+              id="athlete-1"
               value={selected1}
               onChange={(e) => setSelected1(e.target.value)}
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-brand-500/50"
@@ -66,10 +67,11 @@ export default function ComparePage() {
           </div>
 
           <div className="glass-card p-5">
-            <label className="text-sm font-semibold text-slate-400 mb-3 block">
+            <label htmlFor="athlete-2" className="text-sm font-semibold text-slate-400 mb-3 block">
               选择运动员 B
             </label>
             <select
+              id="athlete-2"
               value={selected2}
               onChange={(e) => setSelected2(e.target.value)}
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-brand-500/50"

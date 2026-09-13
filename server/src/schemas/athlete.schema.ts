@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationSchema, searchSchema } from './common.schema.js';
+import { searchSchema } from './common.schema.js';
 
 /**
  * 运动员相关校验 schema

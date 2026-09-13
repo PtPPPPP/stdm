@@ -1,11 +1,10 @@
+import { getResultEventCategory, getMarkUnit, parseMarkValue } from '../../src/domain/athletics/markUtils.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as cheerio from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
 import type {
   CompetitionResult,
-  EventCategory,
-  MarkUnit,
 } from '../../src/domain/athletics/types.js';
 import { athletes, competitionResults, dataMeta } from '../../src/data/index.js';
 import { validateCompetitionResults } from '../../src/domain/athletics/validation.js';
@@ -45,24 +44,6 @@ const AUDIT_MD_PATH = path.resolve('data-import/audit/sync-report.md');
 function ensureImportDirs(): void {
   fs.mkdirSync(path.dirname(NORMALIZED_PATH), { recursive: true });
   fs.mkdirSync(path.dirname(AUDIT_JSON_PATH), { recursive: true });
-}
-
-function inferEventCategory(event: string): EventCategory {
-  const normalized = event.toLowerCase();
-  if (/(100m|200m|400m|relay)/.test(normalized) && !normalized.includes('h')) return 'sprints';
-  if (/(800m|1500m|mile)/.test(normalized)) return 'middle-distance';
-  if (/(3000m|5000m|10000m|marathon|steeple|sc)/.test(normalized)) return 'long-distance';
-  if (/(hurdle|h$|mh|110mh|100mh|400mh)/.test(normalized)) return 'hurdles';
-  if (/(jump|vault)/.test(normalized)) return 'jumps';
-  if (/(shot|discus|javelin|hammer|throw)/.test(normalized)) return 'throws';
-  return 'other';
-}
-
-function inferMarkUnit(mark: string): MarkUnit {
-  if (/m$/i.test(mark)) return 'm';
-  if (/^\d+:\d/.test(mark)) return 'time';
-  if (/s$/i.test(mark) || /^\d{1,2}\.\d+$/.test(mark)) return 's';
-  return 'unknown';
 }
 
 function findAthleteByName(name: string) {
@@ -133,10 +114,11 @@ function parseTableResults($: CheerioAPI, source: DataSourceConfig): Competition
           competitionGroup: 'Diamond League',
           date,
           event,
-          eventCategory: inferEventCategory(event),
+          eventCategory: getResultEventCategory(event),
           place: Number.isFinite(place) ? place : undefined,
           mark,
-          markUnit: inferMarkUnit(mark),
+          markValue: parseMarkValue(mark),
+          markUnit: getMarkUnit(mark, event),
           source: {
             sourceName: source.name,
             sourceUrl: source.url,

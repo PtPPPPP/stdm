@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom';
 import {
   competitionResults,
   getLatestResultsByAthleteId,
-  getTaggedResultsByAthleteId,
+  getRecordedBests,
   STYLE_LABELS,
 } from '../../data';
 import type { Athlete, StyleProfileKey } from '../../data';
 import RadarChart from '../ui/RadarChart';
-import { SourceLink } from '../data/SourceLink';
-import { VerificationBadge } from '../data/VerificationBadge';
+import { SourceLink } from '../ui/SourceLink';
+import { VerificationBadge } from '../ui/VerificationBadge';
 import { EmptyState } from '../ui/EmptyState';
 import AthleteImage from '../athletes/AthleteImage';
 
@@ -69,7 +69,7 @@ function RecentResultsSection({ athlete }: { athlete: Athlete }) {
       <div className="mb-4 rounded-lg border border-white/5 bg-white/5 px-3 py-4">
         <EmptyState
           icon="📭"
-          title="暂无最近比赛"
+          title="暂无最近收录比赛"
           description="数据同步或手动导入后会在这里显示"
           className="py-6"
         />
@@ -79,7 +79,7 @@ function RecentResultsSection({ athlete }: { athlete: Athlete }) {
 
   return (
     <div className="mb-4">
-      <p className="text-xs font-semibold text-slate-500 mb-2">最近比赛</p>
+      <p className="text-xs font-semibold text-slate-500 mb-2">最近收录比赛</p>
       <div className="space-y-2">
         {results.map((r) => (
           <div key={r.id} className="rounded-lg bg-white/5 px-3 py-2">
@@ -105,7 +105,7 @@ function RecentResultsSection({ athlete }: { athlete: Athlete }) {
 }
 
 function TaggedResultSection({ athlete, tag }: { athlete: Athlete; tag: 'PB' | 'SB' }) {
-  const results = getTaggedResultsByAthleteId(competitionResults, athlete, tag).slice(0, 2);
+  const results = getRecordedBests(competitionResults, athlete, tag).slice(0, 2);
 
   if (results.length === 0) {
     return (
@@ -145,93 +145,52 @@ function TaggedResultSection({ athlete, tag }: { athlete: Athlete; tag: 'PB' | '
 export default function ComparePanel({ athlete1, athlete2 }: ComparePanelProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="glass-card p-6">
-        <div className="flex items-center gap-4 mb-4">
-          <AthleteImage
-            athlete={athlete1}
-            variant="compare"
-            className="h-14 w-14 flex-shrink-0"
-          />
-          <div>
-            <h2 className="text-xl font-bold text-white">{athlete1.name}</h2>
-            <p className="text-sm text-slate-400">
-              {athlete1.country} · {athlete1.mainEvent}
-            </p>
+      {[athlete1, athlete2].map((athlete, index) => (
+        <div key={index} className="glass-card p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <AthleteImage
+              athlete={athlete}
+              variant="compare"
+              className="h-14 w-14 flex-shrink-0"
+            />
+            <div>
+              <h2 className="text-xl font-bold text-white">{athlete.name}</h2>
+              <p className="text-sm text-slate-400">
+                {athlete.country} · {athlete.mainEvent}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-3 mb-4">
-          <TaggedResultSection athlete={athlete1} tag="PB" />
-          <TaggedResultSection athlete={athlete1} tag="SB" />
-        </div>
+          <div className="space-y-3 mb-4">
+            <TaggedResultSection athlete={athlete} tag="PB" />
+            <TaggedResultSection athlete={athlete} tag="SB" />
+          </div>
 
-        <RecentResultsSection athlete={athlete1} />
+          <RecentResultsSection athlete={athlete} />
 
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-slate-500 mb-2">优势特点</p>
-          <div className="flex flex-wrap gap-1.5">
-            {athlete1.strengths.map((s) => (
-              <span
-                key={s}
-                className="rounded-md bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300"
-              >
-                {s}
-              </span>
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-slate-500 mb-2">优势特点</p>
+            <div className="flex flex-wrap gap-1.5">
+              {athlete.strengths.map((s) => (
+                <span
+                  key={s}
+                  className={`rounded-md px-2.5 py-1 text-xs ${index === 0 ? 'bg-brand-500/10 text-brand-300' : 'bg-track-gold/10 text-track-gold'}`}
+                >
+                  {s}
+                </span>
             ))}
           </div>
         </div>
 
         <Link
-          to={`/athletes/${athlete1.id}`}
-          className="text-sm text-brand-400 hover:text-brand-300 transition-colors"
+          to={`/athletes/${athlete.id}`}
+          className={`text-sm transition-colors ${index === 0 ? 'text-brand-400 hover:text-brand-300' : 'text-track-gold hover:text-yellow-300'}`}
         >
           → 查看完整资料
         </Link>
       </div>
 
-      <div className="glass-card p-6">
-        <div className="flex items-center gap-4 mb-4">
-          <AthleteImage
-            athlete={athlete2}
-            variant="compare"
-            className="h-14 w-14 flex-shrink-0"
-          />
-          <div>
-            <h2 className="text-xl font-bold text-white">{athlete2.name}</h2>
-            <p className="text-sm text-slate-400">
-              {athlete2.country} · {athlete2.mainEvent}
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3 mb-4">
-          <TaggedResultSection athlete={athlete2} tag="PB" />
-          <TaggedResultSection athlete={athlete2} tag="SB" />
-        </div>
-
-        <RecentResultsSection athlete={athlete2} />
-
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-slate-500 mb-2">优势特点</p>
-          <div className="flex flex-wrap gap-1.5">
-            {athlete2.strengths.map((s) => (
-              <span
-                key={s}
-                className="rounded-md bg-track-gold/10 px-2.5 py-1 text-xs text-track-gold"
-              >
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <Link
-          to={`/athletes/${athlete2.id}`}
-          className="text-sm text-track-gold hover:text-yellow-300 transition-colors"
-        >
-          → 查看完整资料
-        </Link>
-      </div>
+      ))}
 
       <div className="lg:col-span-2 glass-card p-6">
         <h3 className="text-lg font-bold text-white mb-6 text-center">

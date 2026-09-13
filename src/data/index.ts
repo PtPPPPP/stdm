@@ -24,8 +24,6 @@ import {
 } from './manual/events.manual';
 import {
   competitionResults as generatedResults,
-  getLatestResultDate,
-  getLatestResults,
 } from './generated/competitionResults.generated';
 import { dataMeta, getFreshnessStatus } from './generated/dataMeta.generated';
 
@@ -43,6 +41,7 @@ export {
   getVerifiedResults,
   getPendingResults,
   getTaggedResultsByAthleteId,
+  getRecordedBests,
   sortResultsByDateDesc,
   getResultsFreshnessStatus,
 } from '../domain/athletics/resultUtils';
@@ -94,8 +93,6 @@ export {
   getEventById,
   getEventsByCategory,
   getFreshnessStatus,
-  getLatestResultDate,
-  getLatestResults,
   getSimilarAthletes,
   searchAthletes,
   trackEvents,

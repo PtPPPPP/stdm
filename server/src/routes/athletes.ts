@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { dataService } from '../services/data.js';
-import { validate } from '../middleware/validate.js';
+import { validate, getValidated } from '../middleware/validate.js';
 import { athleteQuerySchema } from '../schemas/athlete.schema.js';
 import { idParamSchema } from '../schemas/common.schema.js';
 import { sendSuccess, sendPaginated } from '../utils/response.js';
@@ -13,9 +13,9 @@ const router = Router();
  * 查询运动员列表（支持搜索、筛选、分页）
  */
 router.get('/', validate(athleteQuerySchema, 'query'), (req, res) => {
-  const { q, country, gender, event, page, limit } = (req as any).validated;
+  const { q, country, gender, event, page, limit } = getValidated<typeof athleteQuerySchema>(res);
 
-  let athletes = dataService.searchAthletes(q ?? '', { country, gender, event });
+  const athletes = dataService.searchAthletes(q ?? '', { country, gender, event });
 
   const total = athletes.length;
   const start = (page - 1) * limit;
@@ -37,7 +37,7 @@ router.get('/countries', (req, res) => {
  * 获取运动员详情
  */
 router.get('/:id', validate(idParamSchema, 'params'), (req, res) => {
-  const { id } = (req as any).validated;
+  const { id } = getValidated<typeof idParamSchema>(res);
   const athlete = dataService.getAthleteById(id);
 
   if (!athlete) {
@@ -55,7 +55,7 @@ router.get('/:id', validate(idParamSchema, 'params'), (req, res) => {
  * 获取运动员比赛记录
  */
 router.get('/:id/results', validate(idParamSchema, 'params'), (req, res) => {
-  const { id } = (req as any).validated;
+  const { id } = getValidated<typeof idParamSchema>(res);
   const athlete = dataService.getAthleteById(id);
 
   if (!athlete) {

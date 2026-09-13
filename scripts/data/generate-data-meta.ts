@@ -12,11 +12,9 @@ function getLatestMeet(): { name: string; date: string } | null {
 
 function main(): void {
   const latest = getLatestMeet();
-  const today = new Date().toISOString().slice(0, 10);
 
   writeDataMetaGenerated({
     ...dataMeta,
-    lastAutoSync: dataMeta.lastAutoSync ?? today,
     latestCompletedMeet: latest?.name ?? dataMeta.latestCompletedMeet,
     latestCompletedMeetDate: latest?.date ?? dataMeta.latestCompletedMeetDate,
   });

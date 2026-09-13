@@ -27,12 +27,12 @@ const STATUS_CONFIG = {
 export default function DataFreshnessBadge() {
   const status = getFreshnessStatus();
   const config = STATUS_CONFIG[status];
-  const lastUpdate = dataMeta.lastAutoSync ?? dataMeta.lastManualUpdate;
+  const lastUpdate = dataMeta.latestCompletedMeetDate ?? dataMeta.lastAutoSync ?? dataMeta.lastManualUpdate;
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.bg} ${config.border} ${config.text}`}
-      title={`最近自动同步：${dataMeta.lastAutoSync ?? '暂无'}；最近人工更新：${dataMeta.lastManualUpdate}；用于判断的最近更新时间：${lastUpdate}`}
+      title={`最近自动同步：${dataMeta.lastAutoSync ?? '暂无'}；最近人工更新：${dataMeta.lastManualUpdate}；用于判断的比赛收录日期：${lastUpdate}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
       {config.label}

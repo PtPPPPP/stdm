@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
 
@@ -34,7 +34,7 @@ describe('API Tests', () => {
     it('should support gender filter', async () => {
       const res = await request(app).get('/api/athletes?gender=female&limit=5');
       expect(res.status).toBe(200);
-      expect(res.body.data.every((a: any) => a.gender === 'female')).toBe(true);
+      expect(res.body.data.every((a: { gender: string }) => a.gender === 'female')).toBe(true);
     });
   });
 
@@ -78,19 +78,19 @@ describe('API Tests', () => {
     it('should support athleteId filter', async () => {
       const res = await request(app).get('/api/results?athleteId=noah-lyles');
       expect(res.status).toBe(200);
-      expect(res.body.data.every((r: any) => r.athleteId === 'noah-lyles')).toBe(true);
+      expect(res.body.data.every((r: { athleteId: string }) => r.athleteId === 'noah-lyles')).toBe(true);
     });
 
     it('should support verified filter', async () => {
       const res = await request(app).get('/api/results?verified=verified&limit=5');
       expect(res.status).toBe(200);
-      expect(res.body.data.every((r: any) => r.source.verified === 'verified')).toBe(true);
+      expect(res.body.data.every((r: { source: { verified: string } }) => r.source.verified === 'verified')).toBe(true);
     });
 
     it('should sort by date descending by default', async () => {
       const res = await request(app).get('/api/results?limit=5');
       expect(res.status).toBe(200);
-      const dates = res.body.data.map((r: any) => new Date(r.date).getTime());
+      const dates = res.body.data.map((r: { date: string }) => new Date(r.date).getTime());
       for (let i = 1; i < dates.length; i++) {
         expect(dates[i - 1]).toBeGreaterThanOrEqual(dates[i]);
       }
@@ -109,7 +109,7 @@ describe('API Tests', () => {
     it('should support category filter', async () => {
       const res = await request(app).get('/api/events?category=sprints');
       expect(res.status).toBe(200);
-      expect(res.body.data.every((e: any) => e.category === 'sprints')).toBe(true);
+      expect(res.body.data.every((e: { category: string }) => e.category === 'sprints')).toBe(true);
     });
   });
 
@@ -146,5 +146,29 @@ describe('API Tests', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.data).toBeNull();
     });
+  });
+});
+
+
+describe('query regressions', () => {
+  it('returns event results by canonical ID instead of the translated label', async () => {
+    const res = await request(app).get('/api/events/100m/results');
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data.every((row: { event: string }) => row.event === '100m')).toBe(true);
+  });
+  it('rejects invalid event pagination', async () => {
+    const res = await request(app).get('/api/events/100m/results?page=-1');
+    expect(res.status).toBe(400);
+  });
+  it('rejects unknown result sort fields', async () => {
+    const res = await request(app).get('/api/results?sort=unknown');
+    expect(res.status).toBe(400);
+  });
+  it('does not mutate cached results when sorting a response', async () => {
+    const before = await request(app).get('/api/results?limit=100');
+    await request(app).get('/api/results?sort=markValue&order=asc');
+    const after = await request(app).get('/api/results?limit=100');
+    expect(after.body.data).toEqual(before.body.data);
   });
 });

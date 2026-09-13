@@ -1,3 +1,4 @@
+import { getResultEventCategory, getMarkUnit, parseMarkValue } from '../../src/domain/athletics/markUtils.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import type {
@@ -81,24 +82,6 @@ function findAthlete(raw: RawManualResult) {
   });
 }
 
-function inferEventCategory(event: string): EventCategory {
-  const normalized = event.toLowerCase();
-  if (/(100m|200m|400m|relay)/.test(normalized) && !normalized.includes('h')) return 'sprints';
-  if (/(800m|1500m|mile)/.test(normalized)) return 'middle-distance';
-  if (/(3000m|5000m|10000m|marathon|steeple|sc)/.test(normalized)) return 'long-distance';
-  if (/(hurdle|h$|mh|110mh|100mh|400mh)/.test(normalized)) return 'hurdles';
-  if (/(jump|vault)/.test(normalized)) return 'jumps';
-  if (/(shot|discus|javelin|hammer|throw)/.test(normalized)) return 'throws';
-  return 'other';
-}
-
-function inferMarkUnit(mark: string): MarkUnit {
-  if (/m$/i.test(mark)) return 'm';
-  if (/^\d+:\d/.test(mark)) return 'time';
-  if (/s$/i.test(mark) || /^\d{1,2}\.\d+$/.test(mark)) return 's';
-  return 'unknown';
-}
-
 function inferSourceType(source?: Partial<ResultSource>): ResultSourceType {
   const haystack = `${source?.sourceName ?? ''} ${source?.sourceUrl ?? ''}`.toLowerCase();
   if (haystack.includes('diamondleague') || haystack.includes('diamond league')) return 'diamond-league';
@@ -136,12 +119,12 @@ function normalizeRawResult(raw: RawManualResult, index: number): CompetitionRes
     countryCode: raw.countryCode ?? athlete?.countryCode,
     date,
     event,
-    eventCategory: raw.eventCategory ?? inferEventCategory(event),
+    eventCategory: raw.eventCategory ?? getResultEventCategory(event),
     round: raw.round,
     place: raw.place,
     mark,
-    markValue: raw.markValue,
-    markUnit: raw.markUnit ?? inferMarkUnit(mark),
+    markValue: raw.markValue ?? parseMarkValue(mark),
+    markUnit: raw.markUnit ?? getMarkUnit(mark, event),
     wind: raw.wind,
     reactionTime: raw.reactionTime,
     points: raw.points,
@@ -204,6 +187,9 @@ function main(): void {
 
   const unmatched = rawResults.filter((row) => !findAthlete(row));
   writeUnmatchedReport(unmatched);
+  if (unmatched.length > 0) {
+    throw new Error(`存在 ${unmatched.length} 条未匹配运动员的记录，请先修正运动员 ID。`);
+  }
 
   const missingFieldErrors: string[] = [];
   rawResults.forEach((row, index) => {

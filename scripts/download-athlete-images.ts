@@ -10,7 +10,7 @@
  *   npx tsx scripts/download-athlete-images.ts
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -38,7 +38,7 @@ function extractImageUrls(): AthleteImageInfo[] {
   const results: AthleteImageInfo[] = [];
 
   for (const filePath of [manualPath, extraPath]) {
-    const content = require('fs').readFileSync(filePath, 'utf-8');
+    const content = readFileSync(filePath, 'utf-8');
 
     // 匹配运动员数据块中的 id, name(englishName), image.src
     const blocks = content.split(/\n\s*\n/);
@@ -72,7 +72,7 @@ async function downloadImage(url: string, outputPath: string): Promise<boolean> 
     );
 
     // 检查文件大小，太小的文件可能是错误页面
-    const stats = require('fs').statSync(outputPath);
+    const stats = statSync(outputPath);
     if (stats.size < 1000) {
       // 可能不是有效图片
       return false;

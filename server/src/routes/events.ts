@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { dataService } from '../services/data.js';
-import { validate } from '../middleware/validate.js';
-import { idParamSchema } from '../schemas/common.schema.js';
+import { validate, getValidated, parseInput } from '../middleware/validate.js';
+import { idParamSchema, paginationSchema } from '../schemas/common.schema.js';
 import { sendSuccess, sendPaginated } from '../utils/response.js';
 import { NotFoundError } from '../utils/errors.js';
 
@@ -28,7 +28,7 @@ router.get('/', (req, res) => {
  * 获取项目详情
  */
 router.get('/:id', validate(idParamSchema, 'params'), (req, res) => {
-  const { id } = (req as any).validated;
+  const { id } = getValidated<typeof idParamSchema>(res);
   const event = dataService.getEventById(id);
 
   if (!event) {
@@ -43,16 +43,15 @@ router.get('/:id', validate(idParamSchema, 'params'), (req, res) => {
  * 获取项目比赛记录
  */
 router.get('/:id/results', validate(idParamSchema, 'params'), (req, res) => {
-  const { id } = (req as any).validated;
+  const { id } = getValidated<typeof idParamSchema>(res);
   const event = dataService.getEventById(id);
 
   if (!event) {
     throw new NotFoundError('田径项目', id);
   }
 
-  const results = dataService.getResultsByEvent(event.name);
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = Math.min(100, parseInt(req.query.limit as string) || 20);
+  const results = dataService.getResultsByEvent(event.id);
+  const { page, limit } = parseInput(paginationSchema, req.query);
   const start = (page - 1) * limit;
 
   sendPaginated(res, results.slice(start, start + limit), results.length, page, limit);
